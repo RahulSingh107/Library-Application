@@ -4,7 +4,7 @@ ALSO IT CONTAINS USER TYPE AND THE TIME STAMPS*/
 const { model, Schema } = require("mongoose");
 const { isEmail } = require("validator");
 const { encryptPassword, checkPassword } = require("../bcrypt");
-const { generateToken } = require("../jwt");
+const { generateToken, verifyToken } = require("../jwt");
 
 const userSchema = new Schema({
     firstName: { type: String, trim: true, required: true },
@@ -66,15 +66,15 @@ userSchema.pre("save", async function (next) {
     }
     next();
 });
-UserSchema.statics.findByEmailAndPasswordForAuth = async (email, password) => {
+userSchema.statics.findByEmailAndPasswordForAuth = async (email, password) => {
     try {
         const user = await User.findOne({ email });
         if (!user) {
-            throw new Error("Invalid Credentials");
+            throw new Error("User not found");
         }
         const isMatch = await checkPassword(password, user.password);
         if (!isMatch) {
-            throw new Error("Invalid Credentials");
+            throw new Error("Wrong Password");
         }
         console.log(`Login Successful`);
         return user;
@@ -84,18 +84,19 @@ UserSchema.statics.findByEmailAndPasswordForAuth = async (email, password) => {
     }
 };
 
-UserSchema.methods.generateToken = function () {
+userSchema.methods.generateToken = function () {
     const user = this;
     const token = generateToken(user);
     user.tokens.push({ token });
     user.save();
     return token;
 };
-UserSchema.methods.toJSON = function () {
+userSchema.methods.toJSON = function () {
     const user = this.toObject();
     delete user.tokens;
     return user;
-}
+};
 
-const User = model("User", UserSchema);
+
+const User = model("User", userSchema);
 module.exports = User;

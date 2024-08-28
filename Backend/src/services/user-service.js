@@ -6,7 +6,7 @@ const addNewUser = async (user) => {
         await user.save();
         console.log(`User with ID ${user.id} was added in the database`);
         const token = user.generateToken();
-        return (user, token);
+        return { user, token };
     }
     catch (err) {
         console.error(`please enter valid feilds. The error is ${err}`);
@@ -14,4 +14,15 @@ const addNewUser = async (user) => {
     }
 };
 
-module.exports = { addNewUser };
+const loginUser = async ({ email, password }) => {
+    const user = await User.findByEmailAndPasswordForAuth(
+        email,
+        password);
+    console.log(`User with email:${email} has logged in`);
+    const token = user.generateToken();
+    return { user, token };
+};
+module.exports = {
+    addNewUser,
+    loginUser
+};
